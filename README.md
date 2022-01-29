@@ -2,6 +2,11 @@
 
 Functions for finding the three.js boundary shapes of intersections between 3d geometries and a plane.
 
+<img width="1680" alt="Screen Shot 2022-01-29 at 2 16 23 PM" src="https://user-images.githubusercontent.com/169613/151674486-45f98381-6fac-4a83-82bf-ea00b4af093e.png">
+
+<img width="1709" alt="Screen Shot 2022-01-29 at 2 17 33 PM" src="https://user-images.githubusercontent.com/169613/151674537-17453ae6-1c63-4f04-a405-96c96ab31f74.png">
+
+
 ## sliceThreeGeometry
 
 ```javascript
