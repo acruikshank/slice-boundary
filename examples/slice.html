@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html class=''>
+    <head>
+        <style>
+            body {
+              margin: 0;
+              height: 100%;
+              background: #111;
+            }
+
+            canvas {
+              position: absolute;
+              height: 100%;
+              width: 50%;
+              top: 0;
+              display: block;
+            }
+            #canvas-3d { left: 0; }
+            #canvas-2d { right: 0; }
+            #control { margin: 2vw; z-index:1; position: absolute; top: 0; left: 0; right: 0;  }
+            #height-slider { width: 100%; }
+        </style>
+    </head>
+    <body>
+      <canvas id="canvas-3d"></canvas>
+      <canvas id="canvas-2d"></canvas>
+      <div id="control">
+        <input id="height-slider" type="range" min="-.3" max=".3" value="0" step="0.001"/>
+      </div>
+      <script type="module">
+import * as THREE from "https://cdn.skypack.dev/three@0.136.0";
+import { TrackballControls } from "https://cdn.skypack.dev/three@0.136.0/examples/jsm/controls/TrackballControls.js";
+import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.136.0/examples/jsm/loaders/GLTFLoader.js';
+import { sliceThreeGeometry } from "../slice.js";
+
+let width = window.innerWidth / 2;
+let height = window.innerHeight;
+
+const camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000);
+camera.position.z = 1.5;
+camera.position.y = -1.5;
+camera.position.x = 0;
+
+const controls = new TrackballControls(camera, document.getElementById('canvas-3d'));
+
+const scene = new THREE.Scene();
+
+/**
+ *  Lights
+ */
+const light = new THREE.PointLight( 0xffffff, 1, 100 );
+light.position.set( -2, -3, 4 );
+scene.add( light );
+
+/**
+ * Materials
+ */
+const planeMaterial = new THREE.MeshStandardMaterial({
+  roughness: 0,
+  metalness: 1,
+  emissive: 0xaaaaaa,
+  transparent: true,
+  opacity: .5,
+  side: THREE.DoubleSide,
+});
+
+const blueMaterial = new THREE.MeshPhongMaterial({
+  color: 0x049ef4,
+  emisive: 0x000000,
+  specular: 0x111111,
+  reflectivity: 1,
+  refractionRatio: 0.98,
+});
+
+/**
+ * Objects
+ */
+
+const boxGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+boxGeometry.applyMatrix(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(Math.PI/4, Math.PI/4, Math.PI/4, "XYZ")))
+boxGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(.4, .4, 0))
+scene.add( new THREE.Mesh( boxGeometry, blueMaterial ) );
+
+const torusGeometry = new THREE.TorusGeometry( 0.18, 0.08, 50, 50 );
+torusGeometry.applyMatrix(new THREE.Matrix4()
+  .makeRotationX(Math.PI/2)
+  .multiply(new THREE.Matrix4().makeTranslation(-.4, 0, -.4)))
+scene.add( new THREE.Mesh( torusGeometry, blueMaterial ) );
+
+const icoGeometry = new THREE.IcosahedronGeometry(0.2);
+icoGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(-.4, -.4, 0))
+scene.add( new THREE.Mesh( icoGeometry, blueMaterial ) );
+
+const sphereGeometry = new THREE.SphereGeometry(0.2, 50, 50);
+sphereGeometry.applyMatrix(new THREE.Matrix4().makeTranslation(.4, -.4, 0))
+scene.add( new THREE.Mesh( sphereGeometry, blueMaterial ) );
+
+const planeGeometry = new THREE.PlaneGeometry(1.5, 1.5);
+const planeMesh = new THREE.Mesh( planeGeometry, planeMaterial );
+scene.add(planeMesh);
+
+/**
+ * Slicing
+ */
+
+const canvas = document.getElementById('canvas-2d')
+let cw = canvas.width = canvas.offsetWidth * devicePixelRatio;
+let ch = canvas.height = canvas.offsetHeight * devicePixelRatio;
+const ctx = canvas.getContext('2d')
+
+ctx.scale(cw/2, -cw/2);
+ctx.translate(1, -ch/cw)
+
+ctx.strokeStyle = '#fff';
+ctx.lineWidth = 8/cw;
+
+const renderSlice = (height) => {
+  ctx.clearRect(-2,-2,4,4);
+  [boxGeometry, torusGeometry, icoGeometry, sphereGeometry].forEach(geom => {
+    const transform = new THREE.Matrix4().makeTranslation(0,0,height);
+    const shapes = sliceThreeGeometry(THREE, geom, transform)
+    shapes.forEach(shape => {
+      ctx.beginPath()
+      shape.getPoints(shape.curves.length).forEach((p,i)=>{
+        ctx[i?'lineTo':'moveTo'](p.x, p.y)
+      })
+      ctx.closePath();
+      ctx.stroke()
+    })
+  });
+}
+
+/**
+ * Interaction
+ */
+const slider = document.getElementById('height-slider');
+const setHeight = () => {
+  const height = parseFloat(slider.value)
+  renderSlice(height);
+  planeMesh.translateZ(height - planeMesh.position.z);
+  render();
+}
+slider.addEventListener('input', setHeight);
+
+
+/**
+ *  Rendering
+ */
+
+const renderer = new THREE.WebGLRenderer({
+  alpha: true,
+  antialias: true,
+  canvas: document.getElementById('canvas-3d')
+});
+renderer.setSize(width, height);
+document.body.appendChild( renderer.domElement );
+
+const render = () => renderer.render(scene, camera);
+
+const animate = () => {
+  render();
+  controls.update();
+  requestAnimationFrame(animate);
+};
+
+const onWindowResize = () => {
+  width = window.innerWidth/2;
+  height = window.innerHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+}
+
+controls.addEventListener('change', render);
+window.addEventListener('resize', onWindowResize, false);
+animate();
+setHeight();
+        </script>
+    </body>
+</html>

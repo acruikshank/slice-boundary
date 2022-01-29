@@ -1,0 +1,3 @@
+This model produced by the Revopoint POP (https://www.myminifactory.com/object/3d-print-the-laocoon-generated-by-revopoint-pop-183576)
+and released under the Creative Commons Attribution-NonComercial-ShareAlike 4.0 International license (https://creativecommons.org/licenses/by-nc-sa/4.0/)
+The original OBJ file has been uniformely scaled, translated and rotated and incorporated into a GLTF scene.
